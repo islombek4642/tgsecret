@@ -333,7 +333,10 @@ def get_audio_to_voice_handler(config: Config) -> ConversationHandler:
     handler = AudioToVoiceHandler(config)
     
     return ConversationHandler(
-        entry_points=[CommandHandler("audio2voice", handler.start_audio_conversion)],
+        entry_points=[
+            CommandHandler("audio2voice", handler.start_audio_conversion),
+            CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
+        ],
         states={
             WAITING_FOR_AUDIO: [
                 MessageHandler(
