@@ -39,11 +39,10 @@ class AudioToVoiceHandler:
         
         # Check subscription first (for all users except owner)
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription
+            from bot.handlers import check_subscription, get_subscription_keyboard
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
-                from bot.keyboards import Keyboards
-                keyboard = Keyboards.get_subscription_keyboard(missing_channels)
+                keyboard = get_subscription_keyboard(missing_channels)
                 await update.message.reply_text(
                     "🔒 Audio to Voice funksiyasidan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
                     reply_markup=keyboard
@@ -72,11 +71,10 @@ class AudioToVoiceHandler:
         
         # Check subscription again (for security)
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription
+            from bot.handlers import check_subscription, get_subscription_keyboard
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
-                from bot.keyboards import Keyboards
-                keyboard = Keyboards.get_subscription_keyboard(missing_channels)
+                keyboard = get_subscription_keyboard(missing_channels)
                 await update.message.reply_text(
                     "🔒 Iltimos, avval kanallarga obuna bo'ling:",
                     reply_markup=keyboard
