@@ -1,179 +1,191 @@
-# 🤖 TGSecret - Advanced Telegram Userbot System
+# 🤖 TGSecret - Ilg'or Telegram Userbot Tizimi
 
-A powerful multi-user Telegram userbot system with an intuitive bot interface, advanced AI features, and comprehensive session management.
+Ko'p foydalanuvchili Telegram userbot tizimi. Qulay bot interfeysi, AI xususiyatlari va keng qamrovli sessiya boshqaruvi bilan.
 
-## ✨ Key Features
+## ✨ Asosiy Xususiyatlar
 
-### 🔐 **Smart Authentication System**
-- **Telegram Bot Interface**: Seamless login through Telegram bot
-- **Multi-User Support**: Independent userbot instances for each user
-- **Advanced Session Management**: Automatic session creation, validation, and cleanup
-- **2FA Support**: Full two-factor authentication compatibility
-- **Security First**: Owner-only access with session isolation
+### 🔐 **Aqlli Autentifikatsiya Tizimi**
+- **Telegram Bot Interfeysi**: Bot orqali oson kirish
+- **Ko'p Foydalanuvchi**: Har bir foydalanuvchi uchun alohida userbot
+- **Ilg'or Sessiya Boshqaruvi**: Avtomatik yaratish, tekshirish va tozalash
+- **2FA Qo'llab-quvvatlash**: To'liq ikki bosqichli autentifikatsiya
+- **Xavfsizlik**: Faqat egasi kirishi mumkin, sessiyalar ajratilgan
 
-### 🎙️ **AI-Powered Audio Transcription**
-- **Universal Format Support**: MP3, WAV, OGG, FLAC, WebM, M4A, and more
-- **Video Processing**: Automatic audio extraction from video files
-- **90+ Languages**: Auto-detection with high accuracy
-- **Whisper AI Integration**: Powered by OpenAI's Whisper via Groq API
-- **Smart Message Handling**: Automatic splitting for long transcriptions
-- **Real-time Processing**: Fast transcription with progress updates
+### 🎙️ **AI Bilan Audio Transkript**
+- **Universal Format**: MP3, WAV, OGG, FLAC, WebM, M4A va boshqalar
+- **Video Ishlov Berish**: Video fayllardan audio ajratish
+- **90+ Til**: Avtomatik aniqlash, yuqori aniqlik
+- **Whisper AI**: OpenAI Whisper via Groq API
+- **Aqlli Xabar Boshqaruvi**: Uzun matnlarni avtomatik bo'lish
+- **Real-vaqt Ishlov Berish**: Tez transkript, jarayon yangilanishi
 
-### 🤖 **Advanced Userbot Features**
-- **AI Chat Assistant**: Intelligent conversations via `.ask` command
-- **Comprehensive Help System**: Dynamic command discovery with `.help`
-- **Modular Architecture**: Easy plugin system for custom modules
-- **Auto-Sleep Management**: Configurable resource optimization
-- **Background Processing**: Independent userbot instances
+### 🤖 **Ilg'or Userbot Xususiyatlari**
+- **AI Chat Yordamchisi**: `.ask` buyrug'i orqali aqlli suhbat
+- **To'liq Yordam Tizimi**: `.help` bilan dinamik buyruq kashfiyoti
+- **Modulli Arxitektura**: Oson plugin tizimi
+- **Avtomatik Uyqu**: Sozlanadigan resurs optimallashtirish
+- **Fon Ishlov Berish**: Mustaqil userbot nusxalari
 
-### 🛡️ **Enterprise-Grade Security**
-- **Access Control**: Strict owner-only authentication
-- **Session Isolation**: Complete user data separation
-- **Resource Management**: Automatic cleanup and optimization
-- **Error Handling**: Comprehensive exception management
-- **Audit Trail**: Detailed logging and monitoring
+### 🛡️ **Korxona Darajasidagi Xavfsizlik**
+- **Kirish Nazorati**: Qat'iy faqat egasi autentifikatsiyasi
+- **Sessiya Ajratish**: To'liq foydalanuvchi ma'lumotlari ajratish
+- **Resurs Boshqaruvi**: Avtomatik tozalash va optimallashtirish
+- **Xato Boshqaruvi**: Keng qamrovli istisno boshqaruvi
+- **Audit Trail**: Batafsil jurnal va monitoring
 
-### 📋 **Admin Panel Features**
-- **Channel Management**: Multi-channel subscription enforcement
-- **Dynamic Configuration**: Real-time settings updates
-- **User Monitoring**: Session status and activity tracking
-- **Bulk Operations**: Efficient multi-user management
+### 📋 **Admin Panel Xususiyatlari**
+- **Kanal Boshqaruvi**: Ko'p kanalli obuna majburlash
+- **Dinamik Konfiguratsiya**: Real-vaqt sozlamalar yangilanishi
+- **Foydalanuvchi Monitoring**: Sessiya holati va faollik kuzatuvi
+- **Ommaviy Operatsiyalar**: Samarali ko'p foydalanuvchi boshqaruvi
 
-## 🏗️ Architecture
+## 🏗️ Arxitektura
 
 ```
 tgsecret/
-├── 📁 bot/                    # Telegram Bot Components
-│   ├── 🔧 handlers.py         # Message & callback handlers
-│   ├── ⌨️ keyboards.py        # Interactive keyboard layouts
-│   ├── 🔐 session_creator.py  # Session management logic
-│   ├── 🎙️ transcribe_handler.py # Audio transcription system
-│   ├── ⚙️ admin_commands.py   # Administrative functions
-│   └── 📝 constants.py        # Bot constants and messages
-├── 📁 userbot/               # Userbot Core System
-│   ├── 🚀 main.py            # Userbot entry point
-│   ├── 🔌 loader.py          # Dynamic module loader
-│   └── 📁 modules/           # Feature Modules
-│       ├── 🤖 ai_chat.py     # AI conversation system
-│       ├── ❓ help.py         # Help and documentation
-│       └── 🎵 voice_to_text.py # Audio transcription module
-├── 📁 sessions/              # User session storage (auto-created)
-├── 🔧 main.py               # Application entry point
-├── ⚙️ config.py             # Configuration management
-├── 📋 requirements.txt      # Python dependencies
-└── 📖 README.md             # This documentation
+├── 📁 bot/                    # Telegram Bot Komponentlari
+│   ├── 🔧 handlers.py         # Xabar va callback ishlovchilari
+│   ├── ⌨️ keyboards.py        # Interaktiv klaviatura tartiblar
+│   ├── 🔐 session_creator.py  # Sessiya boshqaruv mantiq
+│   ├── 🎙️ transcribe_handler.py # Audio transkript tizimi
+│   ├── ⚙️ admin_commands.py   # Ma'muriy funksiyalar
+│   └── 📝 constants.py        # Bot konstantalar va xabarlar
+├── 📁 userbot/               # Userbot Asosiy Tizim
+│   ├── 🚀 main.py            # Userbot kirish nuqtasi
+│   ├── 🔌 loader.py          # Dinamik modul yuklovchi
+│   └── 📁 modules/           # Xususiyat Modullari
+│       ├── 🤖 ai_chat.py     # AI suhbat tizimi
+│       ├── ❓ help.py         # Yordam va hujjatlar
+│       └── 🎵 voice_to_text.py # Audio transkript moduli
+├── 📁 sessions/              # Foydalanuvchi sessiya saqlash (avto-yaratiladi)
+├── 🔧 main.py               # Dastur kirish nuqtasi
+├── ⚙️ config.py             # Konfiguratsiya boshqaruvi
+├── 📋 requirements.txt      # Python bog'liqliklar
+└── 📖 README.md             # Bu hujjat
 ```
 
-## 🚀 Quick Start
+## 🚀 Tezkor Boshlash
 
-### Prerequisites
-- **Python 3.8+** (Recommended: Python 3.11+)
-- **Telegram Bot Token** (Get from [@BotFather](https://t.me/BotFather))
-- **Telegram API Credentials** (Get from [my.telegram.org](https://my.telegram.org))
-- **Groq API Key** (Optional, get from [groq.com](https://groq.com))
+### Talablar
+- **Python 3.8+** (Tavsiya: Python 3.11+)
+- **Telegram Bot Token** ([@BotFather](https://t.me/BotFather) dan oling)
+- **Telegram API Ma'lumotlari** ([my.telegram.org](https://my.telegram.org) dan oling)
+- **Groq API Kaliti** (Ixtiyoriy, [groq.com](https://groq.com) dan oling)
 
-### Installation
+### O'rnatish
 
-1. **Clone Repository**
+1. **Repositoriyani Klonlash**
    ```bash
    git clone https://github.com/islombek4642/tgsecret.git
    cd tgsecret
    ```
 
-2. **Install Dependencies**
+2. **Virtual Muhit Yaratish va Faollashtirish**
+   ```bash
+   # Virtual muhit yaratish
+   python -m venv venv
+   
+   # Windows uchun faollashtirish
+   venv\Scripts\activate
+   
+   # Linux/Mac uchun faollashtirish
+   source venv/bin/activate
+   ```
+
+3. **Bog'liqliklarni O'rnatish**
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Environment Configuration**
-   Create `.env` file:
+4. **Muhit Konfiguratsiyasi**
+   `.env` fayl yarating:
    ```env
-   # Required Settings
-   BOT_TOKEN=your_bot_token_from_botfather
-   API_ID=your_api_id_from_my_telegram_org
-   API_HASH=your_api_hash_from_my_telegram_org
-   OWNER_ID=your_telegram_user_id
+   # Majburiy Sozlamalar
+   BOT_TOKEN=botfather_dan_olingan_token
+   API_ID=my_telegram_org_dan_api_id
+   API_HASH=my_telegram_org_dan_api_hash
+   OWNER_ID=sizning_telegram_user_id
    
-   # Optional Settings
-   GROQ_API_KEY=your_groq_api_key_for_ai_features
+   # Ixtiyoriy Sozlamalar
+   GROQ_API_KEY=ai_xususiyatlari_uchun_groq_kaliti
    AUTO_SLEEP_HOURS=12
-   REQUIRED_CHANNEL=@channel1,@channel2  # Comma-separated
+   REQUIRED_CHANNEL=@kanal1,@kanal2  # Vergul bilan ajratilgan
    ```
 
-4. **Launch System**
+5. **Tizimni Ishga Tushirish**
    ```bash
    python main.py
    ```
 
-## 📱 Usage Guide
+## 📱 Foydalanish Qo'llanmasi
 
-### Initial Setup
-1. **Start the System**: Run `python main.py`
-2. **Open Telegram**: Message your bot
-3. **Access Control Panel**: Send `/start` command
-4. **Connect Account**: Click "🔗 Akkaunt ulash"
-5. **Authentication**: Enter phone number and verification code
-6. **Activate Userbot**: Click "🚀 Ishga tushirish"
+### Boshlang'ich Sozlash
+1. **Tizimni Ishga Tushirish**: `python main.py` ni ishga tushiring
+2. **Telegramni Oching**: Botingizga xabar yuboring
+3. **Boshqaruv Paneliga Kirish**: `/start` buyrug'ini yuboring
+4. **Akkauntni Ulash**: "🔗 Akkaunt ulash" tugmasini bosing
+5. **Autentifikatsiya**: Telefon raqam va tasdiqlash kodini kiriting
+6. **Userbotni Faollashtirish**: "🚀 Ishga tushirish" tugmasini bosing
 
-### Bot Commands
-| Command | Description |
-|---------|-------------|
-| `/start` | Main control panel |
-| `/admin` | Admin panel (owner only) |
-| `/transcribe` | Audio transcription info |
+### Bot Buyruqlari
+| Buyruq | Tavsif |
+|--------|--------|
+| `/start` | Asosiy boshqaruv paneli |
+| `/admin` | Admin paneli (faqat egasi) |
+| `/transcribe` | Audio transkript ma'lumoti |
 
-### Userbot Commands
-| Command | Function | Example |
-|---------|----------|---------|
-| `.ask <question>` | AI conversation | `.ask What is Python?` |
-| `.transcribe` | Audio transcription | Reply to voice message |
-| `.help` | Command list | `.help` |
+### Userbot Buyruqlari
+| Buyruq | Funksiya | Misol |
+|--------|----------|-------|
+| `.ask <savol>` | AI suhbat | `.ask Python nima?` |
+| `.transcribe` | Audio transkript | Ovozli xabarga javob |
+| `.help` | Buyruqlar ro'yxati | `.help` |
 
-### Control Panel
-- **🔗 Akkaunt ulash**: Connect Telegram account
-- **🚀 Ishga tushirish**: Start userbot instance
-- **⏰ Qayta ishga tushirish**: Restart userbot
-- **📊 Holat**: Check system status
-- **🚪 Chiqish**: Logout and cleanup
+### Boshqaruv Paneli
+- **🔗 Akkaunt ulash**: Telegram akkauntni ulash
+- **🚀 Ishga tushirish**: Userbot nusxasini ishga tushirish
+- **⏰ Qayta ishga tushirish**: Userbotni qayta ishga tushirish
+- **📊 Holat**: Tizim holatini tekshirish
+- **🚪 Chiqish**: Chiqish va tozalash
 
-## ⚙️ Configuration
+## ⚙️ Konfiguratsiya
 
-### Environment Variables
+### Muhit O'zgaruvchilari
 
-| Variable | Required | Description | Example |
-|----------|----------|-------------|---------|
-| `BOT_TOKEN` | ✅ | Telegram bot token | `123456:ABC-DEF...` |
+| O'zgaruvchi | Majburiy | Tavsif | Misol |
+|-------------|----------|--------|-------|
+| `BOT_TOKEN` | ✅ | Telegram bot tokeni | `123456:ABC-DEF...` |
 | `API_ID` | ✅ | Telegram API ID | `1234567` |
 | `API_HASH` | ✅ | Telegram API hash | `abcdef123456...` |
-| `OWNER_ID` | ✅ | Your Telegram user ID | `987654321` |
-| `GROQ_API_KEY` | ❌ | Groq API for AI features | `gsk_...` |
-| `AUTO_SLEEP_HOURS` | ❌ | Auto-sleep timer (0=disabled) | `12` |
-| `REQUIRED_CHANNEL` | ❌ | Mandatory subscription channels | `@chan1,@chan2` |
+| `OWNER_ID` | ✅ | Sizning Telegram foydalanuvchi ID | `987654321` |
+| `GROQ_API_KEY` | ❌ | AI xususiyatlari uchun Groq API | `gsk_...` |
+| `AUTO_SLEEP_HOURS` | ❌ | Avtomatik uyqu taymer (0=o'chirilgan) | `12` |
+| `REQUIRED_CHANNEL` | ❌ | Majburiy obuna kanallari | `@kanal1,@kanal2` |
 
-### Getting Credentials
+### Ma'lumotlarni Olish
 
 #### 🤖 Bot Token
-1. Message [@BotFather](https://t.me/BotFather)
-2. Send `/newbot`
-3. Follow instructions
-4. Copy the token
+1. [@BotFather](https://t.me/BotFather) ga xabar yuboring
+2. `/newbot` yuboring
+3. Ko'rsatmalarga amal qiling
+4. Tokenni nusxalang
 
-#### 🔑 API Credentials
-1. Visit [my.telegram.org](https://my.telegram.org)
-2. Login with your phone number
-3. Go to "API development tools"
-4. Create new application
-5. Copy `api_id` and `api_hash`
+#### 🔑 API Ma'lumotlari
+1. [my.telegram.org](https://my.telegram.org) ga tashrif buyuring
+2. Telefon raqamingiz bilan kiring
+3. "API development tools" ga o'ting
+4. Yangi dastur yarating
+5. `api_id` va `api_hash` ni nusxalang
 
-#### 👤 User ID
-1. Message [@userinfobot](https://t.me/userinfobot)
-2. Copy your user ID
+#### 👤 Foydalanuvchi ID
+1. [@userinfobot](https://t.me/userinfobot) ga xabar yuboring
+2. Foydalanuvchi ID ni nusxalang
 
-#### 🧠 Groq API Key
-1. Visit [groq.com](https://groq.com)
-2. Sign up for free account
-3. Go to API keys section
-4. Create new key
+#### 🧠 Groq API Kaliti
+1. [groq.com](https://groq.com) ga tashrif buyuring
+2. Bepul akkaunt yarating
+3. API kalitlari bo'limiga o'ting
+4. Yangi kalit yarating
 
 ## 🔧 Muammolarni Hal Qilish
 
@@ -200,33 +212,36 @@ tgsecret/
 - Bir nechta userbot bitta sessiyadan foydalanmoqda
 - Botni qayta ishga tushiring
 
-## ⚙️ Konfiguratsiya
-
-| O'zgaruvchi | Tavsif | Majburiy |
-|-------------|--------|----------|
-| `BOT_TOKEN` | Telegram bot tokeni | Ha |
-| `API_ID` | Telegram API ID | Ha |
-| `API_HASH` | Telegram API Hash | Ha |
-| `OWNER_ID` | Sizning Telegram ID | Ha |
-| `GROQ_API_KEY` | Groq AI API kaliti | Yo'q |
-| `REQUIRED_CHANNEL` | Majburiy obuna kanali (@username) | Yo'q |
-| `AUTO_SLEEP_HOURS` | Avtomatik uxlash vaqti (soat) | Yo'q (standart: 24) |
-
 ## 📄 Litsenziya
 
-Bu loyiha ta'lim maqsadlarida yaratilgan. Telegram Xizmat shartlariga muvofiq foydalaning.
+Bu loyiha MIT litsenziyasi ostida chiqarilgan. Tafsilotlar uchun [LICENSE](LICENSE) faylini ko'ring.
 
 ## ⚠️ Ogohlantirish
 
-- Bu userbot faqat shaxsiy foydalanish uchun mo'ljallangan
-- Spam, bezovtalik yoki zararli maqsadlarda foydalanmang
-- Ishlab chiquvchilar noto'g'ri foydalanish uchun javobgar emas
-- Userbotlardan foydalanish Telegram shartlarini buzishi mumkin - o'z xavfingiz bilan foydalaning
+**Ta'lim Maqsadi**: Bu dastur faqat ta'lim va shaxsiy foydalanish uchun mo'ljallangan.
 
-## 🤝 Yordam
+**Muvofiqlik**: Foydalanuvchilar quyidagilarga rioya qilishlari kerak:
+- Telegram Xizmat Shartlari
+- Mahalliy qonunlar va qoidalar
+- Platforma foydalanish siyosatlari
+- Ma'lumotlarni himoya qilish talablari
 
-Muammolarga duch kelsangiz:
-1. Yuqoridagi "Muammolarni Hal Qilish" bo'limini tekshiring
-2. Barcha kutubxonalar to'g'ri o'rnatilganligiga ishonch hosil qiling
-3. `.env` konfiguratsiyasini tekshiring
-4. Python versiyasi mosligini tekshiring (3.9+)
+**Javobgarlik**: Ishlab chiquvchilar bu dasturdan noto'g'ri foydalanish, qoidabuzarliklar yoki zarar natijasida yuzaga keladigan zararlar uchun javobgar emaslar.
+
+**Qo'llab-quvvatlash**: Bu ochiq manbali loyiha "bor holatida" kafolatsiz taqdim etiladi.
+
+## 🤝 Qo'llab-quvvatlash
+
+- **Muammolar**: [GitHub Issues](https://github.com/islombek4642/tgsecret/issues)
+- **Muhokamalar**: [GitHub Discussions](https://github.com/islombek4642/tgsecret/discussions)
+- **Hujjatlar**: Bu README va kod ichidagi izohlar
+
+---
+
+<div align="center">
+
+**Telegram jamoasi uchun ❤️ bilan yaratildi**
+
+⭐ **Foydali bo'lsa, repoga yulduz qo'ying!** ⭐
+
+</div>
