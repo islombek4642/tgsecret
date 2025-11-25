@@ -15,7 +15,6 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, Mess
 from telegram.constants import ParseMode
 
 from config import Config
-from bot.handlers import check_subscription
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +39,7 @@ class AudioToVoiceHandler:
         
         # Check subscription first (for all users except owner)
         if user_id != self.config.owner_id:
+            from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
                 from bot.keyboards import Keyboards
@@ -72,6 +72,7 @@ class AudioToVoiceHandler:
         
         # Check subscription again (for security)
         if user_id != self.config.owner_id:
+            from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
                 from bot.keyboards import Keyboards
