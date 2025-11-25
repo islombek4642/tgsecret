@@ -306,14 +306,31 @@ class AudioToVoiceHandler:
             )
             return WAITING_FOR_AUDIO
         else:
-            # Still not subscribed - show detailed message
+            # Still not subscribed - show detailed message with buttons
             if missing_channels:
                 channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
+                
+                # Create keyboard with channel links and check button
+                keyboard = []
+                for channel in missing_channels:
+                    if channel.startswith('@'):
+                        channel_link = f"https://t.me/{channel[1:]}"
+                        button_text = f"📢 {channel}"
+                    else:
+                        channel_link = channel
+                        button_text = "📢 Kanalga o'tish"
+                    keyboard.append([InlineKeyboardButton(button_text, url=channel_link)])
+                
+                # Add check button again
+                keyboard.append([InlineKeyboardButton("✅ Obunani tekshirish", callback_data="check_audio_subscription")])
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
                 await query.edit_message_text(
                     f"❌ <b>Siz hali obuna bo'lmagansiz!</b>\n\n"
                     f"Iltimos, avval kanallarga obuna bo'ling:\n\n"
                     f"{channels_text}",
-                    parse_mode=ParseMode.HTML
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup
                 )
             else:
                 await query.edit_message_text(
