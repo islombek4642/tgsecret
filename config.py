@@ -33,7 +33,7 @@ class Config:
     # Groq AI Configuration
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
     GROQ_API_URL: str = "https://api.groq.com/openai/v1/chat/completions"
-    GROQ_MODEL: str = "llama-3.1-70b-versatile"
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
     
     # Subscription Configuration (can be comma-separated for multiple channels)
     REQUIRED_CHANNEL: str = os.getenv("REQUIRED_CHANNEL", "")
