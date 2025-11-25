@@ -42,8 +42,18 @@ class AudioToVoiceHandler:
         
         # Check subscription first (for all users except owner)
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription
-            is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            try:
+                from bot.handlers import check_subscription
+                is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            except Exception as e:
+                logger.error(f"Subscription check error: {e}")
+                await update.message.reply_text(
+                    "⚠️ <b>Obuna tekshirishda xatolik yuz berdi!</b>\n\n"
+                    "🔄 Iltimos, bir oz kuting va qayta urinib ko'ring.\n"
+                    "🌐 Internet aloqasi yoki server muammosi bo'lishi mumkin.",
+                    parse_mode=ParseMode.HTML
+                )
+                return ConversationHandler.END
             if not is_subscribed and missing_channels:
                 # Create detailed subscription message like other handlers
                 channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
@@ -110,8 +120,18 @@ class AudioToVoiceHandler:
     async def _check_user_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
         """Check if user has subscription (owner always allowed)"""
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription
-            is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            try:
+                from bot.handlers import check_subscription
+                is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            except Exception as e:
+                logger.error(f"Subscription check error: {e}")
+                await update.message.reply_text(
+                    "⚠️ <b>Obuna tekshirishda xatolik yuz berdi!</b>\n\n"
+                    "🔄 Iltimos, bir oz kuting va qayta urinib ko'ring.\n"
+                    "🌐 Internet aloqasi yoki server muammosi bo'lishi mumkin.",
+                    parse_mode=ParseMode.HTML
+                )
+                return False
             if not is_subscribed and missing_channels:
                 # Create detailed subscription message like other handlers
                 channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
@@ -282,8 +302,19 @@ class AudioToVoiceHandler:
         await query.answer()
         
         user_id = update.effective_user.id
-        from bot.handlers import check_subscription
-        is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+        
+        try:
+            from bot.handlers import check_subscription
+            is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+        except Exception as e:
+            logger.error(f"Subscription check error: {e}")
+            await query.edit_message_text(
+                "⚠️ <b>Obuna tekshirishda xatolik yuz berdi!</b>\n\n"
+                "🔄 Iltimos, bir oz kuting va qayta urinib ko'ring.\n"
+                "🌐 Internet aloqasi tekshirilmoqda...",
+                parse_mode=ParseMode.HTML
+            )
+            return ConversationHandler.END
         
         if is_subscribed:
             # User is now subscribed, restart audio conversion
