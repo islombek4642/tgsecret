@@ -453,6 +453,7 @@ async def handle_wakeup_userbot(update: Update, context):
         except asyncio.CancelledError:
             # Task was cancelled successfully, continue with cleanup
             print(f"✅ Userbot task for user {user_id} cancelled successfully")
+            raise
         await asyncio.sleep(1)
     
     # Start fresh for this user

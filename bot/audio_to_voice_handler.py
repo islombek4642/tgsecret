@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 # Conversation states
 WAITING_FOR_AUDIO = 1
 
+# Callback patterns
+CHECK_AUDIO_SUBSCRIPTION_PATTERN = "^check_audio_subscription$"
+
 class AudioToVoiceHandler:
     def __init__(self, config: Config):
         self.config = config
@@ -50,7 +53,7 @@ class AudioToVoiceHandler:
                         button_text = f"📢 {channel}"
                     else:
                         channel_link = channel
-                        button_text = f"📢 Kanalga o'tish"
+                        button_text = "📢 Kanalga o'tish"
                     keyboard.append([InlineKeyboardButton(button_text, url=channel_link)])
                 
                 # Add custom check button for audio converter
@@ -83,7 +86,22 @@ class AudioToVoiceHandler:
         """Handle received audio file"""
         user_id = update.effective_user.id
         
-        # Check subscription again (for security)
+        # Check subscription
+        if not await self._check_user_subscription(update, context, user_id):
+            return ConversationHandler.END
+        
+        # Get and validate file
+        file_info = await self._get_and_validate_file(update)
+        if not file_info:
+            return WAITING_FOR_AUDIO
+            
+        file_obj, file_name, file_size = file_info
+        
+        # Process the file
+        return await self._process_audio_file(update, context, file_obj, file_name, file_size)
+
+    async def _check_user_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
+        """Check if user has subscription (owner always allowed)"""
         if user_id != self.config.OWNER_ID:
             from bot.handlers import check_subscription, get_subscription_keyboard
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
@@ -93,13 +111,34 @@ class AudioToVoiceHandler:
                     "🔒 Iltimos, avval kanallarga obuna bo'ling:",
                     reply_markup=keyboard
                 )
-                return ConversationHandler.END
+                return False
+        return True
+
+    async def _get_and_validate_file(self, update: Update) -> tuple:
+        """Get file info and validate format/size"""
+        file_obj, file_name, file_size = self._extract_file_info(update)
         
-        # Get file info
-        file_obj = None
-        file_name = None
-        file_size = None
-        
+        if not file_obj:
+            await update.message.reply_text(
+                "❌ Audio yoki video fayl yuboring!\n\n"
+                "📎 Quyidagi formatlarni qo'llab-quvvatlayman:\n"
+                "🎵 Audio: mp3, wav, ogg, m4a, aac, flac, wma, opus\n"
+                "📹 Video: mp4, avi, mov, mkv"
+            )
+            return None
+            
+        # Check file size (max 50MB)
+        if file_size and file_size > 50 * 1024 * 1024:
+            await update.message.reply_text(
+                "❌ Fayl hajmi juda katta!\n"
+                "📏 Maksimal hajm: 50MB"
+            )
+            return None
+            
+        return file_obj, file_name, file_size
+
+    def _extract_file_info(self, update: Update) -> tuple:
+        """Extract file object, name and size from update"""
         if update.message.audio:
             file_obj = update.message.audio
             file_name = file_obj.file_name or f"audio_{file_obj.file_id}.mp3"
@@ -123,87 +162,74 @@ class AudioToVoiceHandler:
             
             # Check if document is audio/video
             if not self._is_supported_format(file_name):
-                await update.message.reply_text(
-                    "❌ Qo'llab-quvvatlanmaydigan format!\n\n"
-                    "✅ Qo'llab-quvvatlanadigan formatlar:\n"
-                    "🎵 Audio: mp3, wav, ogg, m4a, aac, flac, wma, opus\n"
-                    "📹 Video: mp4, avi, mov, mkv"
-                )
-                return WAITING_FOR_AUDIO
+                return None, None, None
         else:
-            await update.message.reply_text(
-                "❌ Audio yoki video fayl yuboring!\n\n"
-                "📎 Quyidagi formatlarni qo'llab-quvvatlayman:\n"
-                "🎵 Audio: mp3, wav, ogg, m4a, aac, flac, wma, opus\n"
-                "📹 Video: mp4, avi, mov, mkv"
-            )
-            return WAITING_FOR_AUDIO
-        
-        # Check file size (max 50MB)
-        if file_size and file_size > 50 * 1024 * 1024:
-            await update.message.reply_text(
-                "❌ Fayl hajmi juda katta!\n"
-                "📏 Maksimal hajm: 50MB"
-            )
-            return WAITING_FOR_AUDIO
-        
+            return None, None, None
+            
+        return file_obj, file_name, file_size
+
+    async def _process_audio_file(self, update: Update, context: ContextTypes.DEFAULT_TYPE, 
+                                 file_obj, file_name: str, file_size: int) -> int:
+        """Process the audio file conversion"""
         # Send processing message
         processing_msg = await update.message.reply_text(
             "⏳ Audio ishlanmoqda...\n"
-            f"📁 Fayl: {file_name}\n"
+            f"� Fayl: {file_name}\n"
             f"📏 Hajm: {self._format_file_size(file_size)}"
         )
         
         try:
-            # Download file
-            file = await context.bot.get_file(file_obj.file_id)
-            input_path = self.temp_dir / f"input_{file_obj.file_id}_{file_name}"
-            await file.download_to_drive(input_path)
-            
-            # Convert to voice message format
-            output_path = await self._convert_to_voice(input_path, file_obj.file_id)
-            
-            if not output_path or not output_path.exists():
-                raise Exception("Konvertatsiya xatosi")
-            
-            # Update processing message
-            await processing_msg.edit_text(
-                "📤 Ovozli habar yuborilmoqda..."
-            )
-            
-            # Send as voice message
-            with open(output_path, 'rb') as voice_file:
-                await update.message.reply_voice(
-                    voice=voice_file,
-                    caption=f"🎵 Konvertatsiya qilingan audio\n📁 Asl fayl: {file_name}"
-                )
-            
-            # Delete processing message
-            await processing_msg.delete()
-            
-            # Success message
-            await update.message.reply_text(
-                "✅ Audio muvaffaqiyatli ovozli habarga aylantirildi!\n\n"
-                "🔄 Yana audio yuborish uchun fayl yuboring\n"
-                "❌ Chiqish uchun /cancel"
-            )
+            # Download and convert
+            await self._download_and_convert(context, file_obj, file_name, processing_msg, update)
             
         except Exception as e:
             logger.error(f"Audio conversion error: {e}")
             await processing_msg.edit_text(
                 "❌ Audio konvertatsiya qilishda xatolik yuz berdi!\n\n"
-                "🔍 Sabablari:\n"
+                "� Sabablari:\n"
                 "• Fayl buzuq bo'lishi mumkin\n"
                 "• Qo'llab-quvvatlanmaydigan format\n"
                 "• Server xatosi\n\n"
                 "🔄 Boshqa fayl bilan qayta urinib ko'ring"
             )
-        
         finally:
             # Clean up temporary files
-            await self._cleanup_temp_files(file_obj.file_id)
+            self._cleanup_temp_files(file_obj.file_id)
         
         return WAITING_FOR_AUDIO
+
+    async def _download_and_convert(self, context, file_obj, file_name: str, processing_msg, update):
+        """Download file and convert to voice message"""
+        # Download file
+        file = await context.bot.get_file(file_obj.file_id)
+        input_path = self.temp_dir / f"input_{file_obj.file_id}_{file_name}"
+        await file.download_to_drive(input_path)
+        
+        # Convert to voice message format
+        output_path = await self._convert_to_voice(input_path, file_obj.file_id)
+        
+        if not output_path or not output_path.exists():
+            raise RuntimeError("Konvertatsiya xatosi")
+        
+        # Update processing message
+        await processing_msg.edit_text("📤 Ovozli habar yuborilmoqda...")
+        
+        # Send as voice message
+        import aiofiles
+        async with aiofiles.open(output_path, 'rb') as voice_file:
+            voice_data = await voice_file.read()
+            await update.message.reply_voice(
+                voice=voice_data,
+                caption=f"🎵 Konvertatsiya qilingan audio\n📁 Asl fayl: {file_name}"
+            )
+        
+        # Delete processing message and send success
+        await processing_msg.delete()
+        await update.message.reply_text(
+            "✅ Audio muvaffaqiyatli ovozli habarga aylantirildi!\n\n"
+            "🔄 Yana audio yuborish uchun fayl yuboring\n"
+            "❌ Chiqish uchun /cancel"
+        )
 
     async def cancel_conversion(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Cancel audio conversion"""
@@ -229,7 +255,7 @@ class AudioToVoiceHandler:
         
         user_id = update.effective_user.id
         from bot.handlers import check_subscription
-        is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+        is_subscribed, _ = await check_subscription(context.bot, user_id)
         
         if is_subscribed:
             # User is now subscribed, restart audio conversion
@@ -286,7 +312,7 @@ class AudioToVoiceHandler:
                 stderr=asyncio.subprocess.PIPE
             )
             
-            stdout, stderr = await process.communicate()
+            _, stderr = await process.communicate()
             
             if process.returncode != 0:
                 logger.error(f"FFmpeg error: {stderr.decode()}")
@@ -317,7 +343,7 @@ class AudioToVoiceHandler:
             size_bytes /= 1024.0
         return f"{size_bytes:.1f} TB"
 
-    async def _cleanup_temp_files(self, file_id: str):
+    def _cleanup_temp_files(self, file_id: str):
         """Clean up temporary files"""
         try:
             # Remove input and output files
@@ -335,7 +361,7 @@ def get_audio_to_voice_handler(config: Config) -> ConversationHandler:
     return ConversationHandler(
         entry_points=[
             CommandHandler("audio2voice", handler.start_audio_conversion),
-            CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
+            CallbackQueryHandler(handler.check_audio_subscription, pattern=CHECK_AUDIO_SUBSCRIPTION_PATTERN),
         ],
         states={
             WAITING_FOR_AUDIO: [
@@ -345,13 +371,13 @@ def get_audio_to_voice_handler(config: Config) -> ConversationHandler:
                     handler.handle_audio_file
                 ),
                 CallbackQueryHandler(handler.cancel_conversion, pattern="^cancel_audio_conversion$"),
-                CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
+                CallbackQueryHandler(handler.check_audio_subscription, pattern=CHECK_AUDIO_SUBSCRIPTION_PATTERN),
             ],
         },
         fallbacks=[
             CommandHandler("cancel", handler.cancel_conversion),
             CallbackQueryHandler(handler.cancel_conversion, pattern="^cancel_audio_conversion$"),
-            CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
+            CallbackQueryHandler(handler.check_audio_subscription, pattern=CHECK_AUDIO_SUBSCRIPTION_PATTERN),
         ],
         per_message=False,
         per_chat=True,
