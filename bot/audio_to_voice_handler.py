@@ -45,6 +45,9 @@ class AudioToVoiceHandler:
             from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
+                # Create detailed subscription message like other handlers
+                channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
+                
                 # Create custom keyboard for audio converter
                 keyboard = []
                 for channel in missing_channels:
@@ -61,7 +64,11 @@ class AudioToVoiceHandler:
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
                 await update.message.reply_text(
-                    "🔒 Audio to Voice funksiyasidan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
+                    f"🔒 <b>Audio to Voice funksiyasidan foydalanish uchun majburiy obuna!</b>\n\n"
+                    f"📢 <b>Quyidagi kanallarga obuna bo'ling:</b>\n"
+                    f"{channels_text}\n\n"
+                    f"Obuna bo'lgandan so'ng \"✅ Obunani tekshirish\" tugmasini bosing.",
+                    parse_mode=ParseMode.HTML,
                     reply_markup=reply_markup
                 )
                 return ConversationHandler.END
@@ -103,18 +110,39 @@ class AudioToVoiceHandler:
     async def _check_user_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int) -> bool:
         """Check if user has subscription (owner always allowed)"""
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription, get_subscription_keyboard
+            from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
-                keyboard = get_subscription_keyboard(missing_channels)
+                # Create detailed subscription message like other handlers
+                channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
+                
+                # Create custom keyboard for audio converter
+                keyboard = []
+                for channel in missing_channels:
+                    if channel.startswith('@'):
+                        channel_link = f"https://t.me/{channel[1:]}"
+                        button_text = f"📢 {channel}"
+                    else:
+                        channel_link = channel
+                        button_text = "📢 Kanalga o'tish"
+                    keyboard.append([InlineKeyboardButton(button_text, url=channel_link)])
+                
+                # Add custom check button for audio converter
+                keyboard.append([InlineKeyboardButton("✅ Obunani tekshirish", callback_data="check_audio_subscription")])
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
                 await update.message.reply_text(
-                    "🔒 Iltimos, avval kanallarga obuna bo'ling:",
-                    reply_markup=keyboard
+                    f"🔒 <b>Audio to Voice funksiyasidan foydalanish uchun majburiy obuna!</b>\n\n"
+                    f"📢 <b>Quyidagi kanallarga obuna bo'ling:</b>\n"
+                    f"{channels_text}\n\n"
+                    f"Obuna bo'lgandan so'ng \"✅ Obunani tekshirish\" tugmasini bosing.",
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=reply_markup
                 )
                 return False
         return True
 
-    async def _get_and_validate_file(self, update: Update) -> tuple:
+    async def _get_and_validate_file(self, update: Update) -> tuple | None:
         """Get file info and validate format/size"""
         file_obj, file_name, file_size = self._extract_file_info(update)
         
