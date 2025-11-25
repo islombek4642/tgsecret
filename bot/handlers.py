@@ -23,6 +23,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import config
 from bot.keyboards import Keyboards
 from bot.session_creator import get_session_creator, remove_session_creator
+from bot.audio_to_voice_handler import get_audio_to_voice_handler
 
 
 class LoginState(Enum):

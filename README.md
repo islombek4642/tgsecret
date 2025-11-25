@@ -18,6 +18,7 @@ Ko'p foydalanuvchili Telegram userbot tizimi. Qulay bot interfeysi, AI xususiyat
 - **Whisper AI**: OpenAI Whisper via Groq API
 - **Aqlli Xabar Boshqaruvi**: Uzun matnlarni avtomatik bo'lish
 - **Real-vaqt Ishlov Berish**: Tez transkript, jarayon yangilanishi
+- **Audio to Voice**: Audio fayllarni ovozli habarga aylantirish (FFmpeg)
 
 ### 🤖 **Ilg'or Userbot Xususiyatlari**
 - **AI Chat Yordamchisi**: `.ask` buyrug'i orqali aqlli suhbat
@@ -48,6 +49,7 @@ tgsecret/
 │   ├── ⌨️ keyboards.py        # Interaktiv klaviatura tartiblar
 │   ├── 🔐 session_creator.py  # Sessiya boshqaruv mantiq
 │   ├── 🎙️ transcribe_handler.py # Audio transkript tizimi
+│   ├── 🎵 audio_to_voice_handler.py # Audio to Voice konverter
 │   ├── ⚙️ admin_commands.py   # Ma'muriy funksiyalar
 │   └── 📝 constants.py        # Bot konstantalar va xabarlar
 ├── 📁 userbot/               # Userbot Asosiy Tizim
@@ -68,6 +70,7 @@ tgsecret/
 
 ### Talablar
 - **Python 3.8+** (Tavsiya: Python 3.11+)
+- **FFmpeg** (Audio/video konvertatsiya uchun)
 - **Telegram Bot Token** ([@BotFather](https://t.me/BotFather) dan oling)
 - **Telegram API Ma'lumotlari** ([my.telegram.org](https://my.telegram.org) dan oling)
 - **Groq API Kaliti** (Ixtiyoriy, [groq.com](https://groq.com) dan oling)
@@ -92,12 +95,28 @@ tgsecret/
    source venv/bin/activate
    ```
 
-3. **Bog'liqliklarni O'rnatish**
+3. **FFmpeg O'rnatish**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt update
+   sudo apt install ffmpeg -y
+   
+   # CentOS/RHEL
+   sudo yum install ffmpeg -y
+   
+   # Windows (Chocolatey)
+   choco install ffmpeg
+   
+   # macOS (Homebrew)
+   brew install ffmpeg
+   ```
+
+4. **Bog'liqliklarni O'rnatish**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Muhit Konfiguratsiyasi**
+5. **Muhit Konfiguratsiyasi**
    `.env` fayl yarating:
    ```env
    # Majburiy Sozlamalar

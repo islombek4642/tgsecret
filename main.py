@@ -23,6 +23,7 @@ from config import config
 from bot.handlers import (
     start_command,
     get_login_conversation_handler,
+    get_audio_to_voice_handler,
     WELCOME_MESSAGE
 )
 from bot.keyboards import Keyboards
@@ -255,6 +256,9 @@ async def main():
         MessageHandler(filters.TEXT & filters.User(config.OWNER_ID) & ~filters.COMMAND, handle_add_channel_message)
     )
     
+    # Audio to voice conversion handler
+    application.add_handler(get_audio_to_voice_handler(config))
+    
     # Audio transcription handler (for audio/voice messages)
     application.add_handler(
         MessageHandler(
@@ -278,7 +282,8 @@ async def main():
         commands = [
             BotCommand("start", "Botni ishga tushirish va boshqaruv paneli"),
             BotCommand("help", "Bot haqida ma'lumot va yordam"),
-            BotCommand("transcribe", "Audio/voice ni matnga aylantirish (Whisper AI)")
+            BotCommand("transcribe", "Audio/voice ni matnga aylantirish (Whisper AI)"),
+            BotCommand("audio2voice", "Audio faylni ovozli habarga aylantirish (FFmpeg)")
         ]
         await application.bot.set_my_commands(commands)
         await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
