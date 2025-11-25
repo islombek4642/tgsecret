@@ -356,13 +356,29 @@ class AudioToVoiceHandler:
                 keyboard.append([InlineKeyboardButton("✅ Obunani tekshirish", callback_data="check_audio_subscription")])
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 
-                await query.edit_message_text(
-                    f"❌ <b>Siz hali obuna bo'lmagansiz!</b>\n\n"
-                    f"Iltimos, avval kanallarga obuna bo'ling:\n\n"
-                    f"{channels_text}",
-                    parse_mode=ParseMode.HTML,
-                    reply_markup=reply_markup
-                )
+                # Add timestamp to make message unique
+                import datetime
+                current_time = datetime.datetime.now().strftime("%H:%M:%S")
+                
+                try:
+                    await query.edit_message_text(
+                        f"❌ <b>Siz hali obuna bo'lmagansiz!</b>\n\n"
+                        f"Iltimos, avval kanallarga obuna bo'ling:\n\n"
+                        f"{channels_text}\n\n"
+                        f"<i>Tekshirildi: {current_time}</i>",
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup
+                    )
+                except Exception as e:
+                    # If edit fails, send new message
+                    logger.warning(f"Message edit failed, sending new message: {e}")
+                    await query.message.reply_text(
+                        f"❌ <b>Siz hali obuna bo'lmagansiz!</b>\n\n"
+                        f"Iltimos, avval kanallarga obuna bo'ling:\n\n"
+                        f"{channels_text}",
+                        parse_mode=ParseMode.HTML,
+                        reply_markup=reply_markup
+                    )
             else:
                 await query.edit_message_text(
                     "❌ Hali ham barcha kanallarga obuna bo'lmagansiz.\n"
