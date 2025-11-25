@@ -15,6 +15,7 @@ from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, Mess
 from telegram.constants import ParseMode
 
 from config import Config
+from bot.handlers import check_subscription
 
 logger = logging.getLogger(__name__)
 
@@ -37,10 +38,17 @@ class AudioToVoiceHandler:
         """Start audio to voice conversion process"""
         user_id = update.effective_user.id
         
-        # Check if user is owner
+        # Check subscription first (for all users except owner)
         if user_id != self.config.owner_id:
-            await update.message.reply_text("❌ Bu funksiya faqat bot egasi uchun!")
-            return ConversationHandler.END
+            is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            if not is_subscribed and missing_channels:
+                from bot.keyboards import Keyboards
+                keyboard = Keyboards.get_subscription_keyboard(missing_channels)
+                await update.message.reply_text(
+                    "🔒 Audio to Voice funksiyasidan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
+                    reply_markup=keyboard
+                )
+                return ConversationHandler.END
         
         keyboard = [
             [InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_audio_conversion")]
@@ -62,9 +70,17 @@ class AudioToVoiceHandler:
         """Handle received audio file"""
         user_id = update.effective_user.id
         
+        # Check subscription again (for security)
         if user_id != self.config.owner_id:
-            await update.message.reply_text("❌ Bu funksiya faqat bot egasi uchun!")
-            return ConversationHandler.END
+            is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+            if not is_subscribed and missing_channels:
+                from bot.keyboards import Keyboards
+                keyboard = Keyboards.get_subscription_keyboard(missing_channels)
+                await update.message.reply_text(
+                    "🔒 Iltimos, avval kanallarga obuna bo'ling:",
+                    reply_markup=keyboard
+                )
+                return ConversationHandler.END
         
         # Get file info
         file_obj = None
