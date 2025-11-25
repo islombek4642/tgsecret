@@ -39,13 +39,27 @@ class AudioToVoiceHandler:
         
         # Check subscription first (for all users except owner)
         if user_id != self.config.OWNER_ID:
-            from bot.handlers import check_subscription, get_subscription_keyboard
+            from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
-                keyboard = get_subscription_keyboard(missing_channels)
+                # Create custom keyboard for audio converter
+                keyboard = []
+                for channel in missing_channels:
+                    if channel.startswith('@'):
+                        channel_link = f"https://t.me/{channel[1:]}"
+                        button_text = f"📢 {channel}"
+                    else:
+                        channel_link = channel
+                        button_text = f"📢 Kanalga o'tish"
+                    keyboard.append([InlineKeyboardButton(button_text, url=channel_link)])
+                
+                # Add custom check button for audio converter
+                keyboard.append([InlineKeyboardButton("✅ Obunani tekshirish", callback_data="check_audio_subscription")])
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
                 await update.message.reply_text(
                     "🔒 Audio to Voice funksiyasidan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
-                    reply_markup=keyboard
+                    reply_markup=reply_markup
                 )
                 return ConversationHandler.END
         
@@ -208,6 +222,43 @@ class AudioToVoiceHandler:
         
         return ConversationHandler.END
 
+    async def check_audio_subscription(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+        """Check subscription for audio converter and restart if subscribed"""
+        query = update.callback_query
+        await query.answer()
+        
+        user_id = update.effective_user.id
+        from bot.handlers import check_subscription
+        is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
+        
+        if is_subscribed:
+            # User is now subscribed, restart audio conversion
+            await query.edit_message_text(
+                "✅ Obuna tasdiqlandi! Endi audio fayl yuboring."
+            )
+            # Start the audio conversion process
+            keyboard = [
+                [InlineKeyboardButton("❌ Bekor qilish", callback_data="cancel_audio_conversion")]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            await query.message.reply_text(
+                "🎵 <b>Audio to Voice Converter</b>\n\n"
+                "📎 Audio fayl yuboring (mp3, wav, ogg, m4a, aac, flac, wma, opus)\n"
+                "📹 Yoki video fayl yuboring (mp4, avi, mov, mkv)\n\n"
+                "⚡ Bot audio ni ovozli habarga aylantiradi",
+                parse_mode=ParseMode.HTML,
+                reply_markup=reply_markup
+            )
+            return WAITING_FOR_AUDIO
+        else:
+            # Still not subscribed
+            await query.edit_message_text(
+                "❌ Hali ham barcha kanallarga obuna bo'lmagansiz.\n"
+                "Iltimos, barcha kanallarga obuna bo'ling va qayta urinib ko'ring."
+            )
+            return ConversationHandler.END
+
     async def _convert_to_voice(self, input_path: Path, file_id: str) -> Optional[Path]:
         """Convert audio file to voice message format using FFmpeg"""
         output_path = self.temp_dir / f"voice_{file_id}.ogg"
@@ -291,11 +342,13 @@ def get_audio_to_voice_handler(config: Config) -> ConversationHandler:
                     handler.handle_audio_file
                 ),
                 CallbackQueryHandler(handler.cancel_conversion, pattern="^cancel_audio_conversion$"),
+                CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
             ],
         },
         fallbacks=[
             CommandHandler("cancel", handler.cancel_conversion),
             CallbackQueryHandler(handler.cancel_conversion, pattern="^cancel_audio_conversion$"),
+            CallbackQueryHandler(handler.check_audio_subscription, pattern="^check_audio_subscription$"),
         ],
         per_message=False,
         per_chat=True,
