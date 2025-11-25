@@ -196,11 +196,17 @@ class AudioToVoiceHandler:
     async def cancel_conversion(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         """Cancel audio conversion"""
         query = update.callback_query
-        await query.answer()
         
-        await query.edit_message_text(
-            "❌ Audio konvertatsiya bekor qilindi"
-        )
+        if query:
+            await query.answer()
+            await query.edit_message_text(
+                "❌ Audio konvertatsiya bekor qilindi"
+            )
+        else:
+            # If called via /cancel command
+            await update.message.reply_text(
+                "❌ Audio konvertatsiya bekor qilindi"
+            )
         
         return ConversationHandler.END
 
