@@ -38,7 +38,7 @@ class AudioToVoiceHandler:
         user_id = update.effective_user.id
         
         # Check subscription first (for all users except owner)
-        if user_id != self.config.owner_id:
+        if user_id != self.config.OWNER_ID:
             from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
@@ -71,7 +71,7 @@ class AudioToVoiceHandler:
         user_id = update.effective_user.id
         
         # Check subscription again (for security)
-        if user_id != self.config.owner_id:
+        if user_id != self.config.OWNER_ID:
             from bot.handlers import check_subscription
             is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
             if not is_subscribed and missing_channels:
