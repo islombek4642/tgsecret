@@ -283,7 +283,7 @@ class AudioToVoiceHandler:
         
         user_id = update.effective_user.id
         from bot.handlers import check_subscription
-        is_subscribed, _ = await check_subscription(context.bot, user_id)
+        is_subscribed, missing_channels = await check_subscription(context.bot, user_id)
         
         if is_subscribed:
             # User is now subscribed, restart audio conversion
@@ -306,11 +306,20 @@ class AudioToVoiceHandler:
             )
             return WAITING_FOR_AUDIO
         else:
-            # Still not subscribed
-            await query.edit_message_text(
-                "❌ Hali ham barcha kanallarga obuna bo'lmagansiz.\n"
-                "Iltimos, barcha kanallarga obuna bo'ling va qayta urinib ko'ring."
-            )
+            # Still not subscribed - show detailed message
+            if missing_channels:
+                channels_text = "\n".join([f"• {ch}" for ch in missing_channels])
+                await query.edit_message_text(
+                    f"❌ <b>Siz hali obuna bo'lmagansiz!</b>\n\n"
+                    f"Iltimos, avval kanallarga obuna bo'ling:\n\n"
+                    f"{channels_text}",
+                    parse_mode=ParseMode.HTML
+                )
+            else:
+                await query.edit_message_text(
+                    "❌ Hali ham barcha kanallarga obuna bo'lmagansiz.\n"
+                    "Iltimos, barcha kanallarga obuna bo'ling va qayta urinib ko'ring."
+                )
             return ConversationHandler.END
 
     async def _convert_to_voice(self, input_path: Path, file_id: str) -> Optional[Path]:
