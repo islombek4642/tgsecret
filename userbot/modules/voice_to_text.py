@@ -102,6 +102,18 @@ async def transcribe_audio(file_path: str) -> str:
         return f"❌ Xatolik: {str(e)}"
 
 
+async def _safe_edit(msg, event, text: str):
+    """Safely edit message, fallback to respond if edit fails."""
+    try:
+        await msg.edit(text)
+    except Exception:
+        try:
+            await msg.delete()
+        except Exception:
+            pass
+        await event.respond(text)
+
+
 async def _send_result(event, text: str):
     """Send transcription result, splitting if too long."""
     max_chunk = 3500
@@ -175,24 +187,24 @@ async def handle_transcribe(event):
         file_path = await reply_msg.download_media(file=TEMP_DIR)
         
         if not file_path:
-            await processing_msg.edit("❌ Media yuklanmadi")
+            await _safe_edit(processing_msg, event, "❌ Media yuklanmadi")
             return
         
-        # Check if file exists and has valid extension
+        # Check if file exists
         if not os.path.exists(file_path):
-            await processing_msg.edit("❌ Yuklangan fayl topilmadi")
+            await _safe_edit(processing_msg, event, "❌ Yuklangan fayl topilmadi")
             return
         
         # Transcribe
-        await processing_msg.edit("🔄 Whisper AI bilan matnga aylantirilmoqda...")
+        await _safe_edit(processing_msg, event, "🔄 Whisper AI bilan matnga aylantirilmoqda...")
         text = await transcribe_audio(file_path)
         
         # Cleanup
-        try:
-            if file_path and os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
+            try:
                 os.remove(file_path)
-        except OSError:
-            pass  # Ignore file delete errors
+            except OSError:
+                pass
         
         # Result - delete processing msg and send new
         try:
@@ -206,13 +218,14 @@ async def handle_transcribe(event):
             await _send_result(event, text)
     
     except Exception as e:
-        await processing_msg.edit(f"❌ Xatolik: {str(e)}")
+        error_msg = f"❌ Xatolik: {str(e)[:200]}"
+        await _safe_edit(processing_msg, event, error_msg)
         # Cleanup on error
-        try:
-            if file_path and os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
+            try:
                 os.remove(file_path)
-        except OSError:
-            pass  # Ignore file delete errors
+            except OSError:
+                pass
 
 
 def setup(client: TelegramClient, loader) -> ModuleInfo:
