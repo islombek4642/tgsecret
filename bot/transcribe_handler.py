@@ -189,44 +189,39 @@ async def _get_media_file(message):
 
 
 async def _send_transcription_result(processing_msg, text, update):
-    """Send transcription result, splitting if too long."""
+    """Send transcription result - always delete processing msg and send new."""
+    # Always delete processing message first
+    try:
+        await processing_msg.delete()
+    except Exception:
+        pass
+    
+    # Handle errors
     if text.startswith("❌"):
-        await processing_msg.edit_text(text)
+        await update.message.reply_text(text)
         return
     
-    # Telegram message limit is 4096 characters
-    header = "🎙️ **Transkript Natijasi**\n━━━━━━━━━━━━━━━━\n\n"
-    footer = f"\n\n━━━━━━━━━━━━━━━━\n*{WHISPER_MODEL}*"
+    # Safe chunk size (Telegram limit is 4096, we use 3500 for safety)
+    max_chunk = 3500
+    footer = f"\n\n━━━━━━━━━━━━━━━━\n_{WHISPER_MODEL}_"
     
-    # Calculate safe max length (4096 - header - footer - buffer)
-    max_single = 4096 - len(header) - len(footer) - 50
-    max_chunk = 3800  # Safe chunk size for split messages
-    
-    if len(text) <= max_single:
-        # Single message - can edit
-        try:
-            await processing_msg.edit_text(header + text + footer, parse_mode="Markdown")
-        except Exception:
-            # Fallback: delete and send new
-            try:
-                await processing_msg.delete()
-            except Exception:
-                pass
-            await update.message.reply_text(header + text + footer, parse_mode="Markdown")
+    if len(text) <= max_chunk:
+        # Single message
+        await update.message.reply_text(
+            f"🎙️ **Transkript Natijasi**\n"
+            f"━━━━━━━━━━━━━━━━\n\n"
+            f"{text}{footer}",
+            parse_mode="Markdown"
+        )
     else:
-        # Long text - delete processing message and send parts
-        try:
-            await processing_msg.delete()
-        except Exception:
-            pass
+        # Split into multiple messages
+        total_parts = (len(text) // max_chunk) + 1
         
         # Send first part
-        first_chunk = text[:max_chunk]
-        total_parts = (len(text) // max_chunk) + 1
         await update.message.reply_text(
             f"🎙️ **Transkript Natijasi** (1/{total_parts})\n"
             f"━━━━━━━━━━━━━━━━\n\n"
-            f"{first_chunk}",
+            f"{text[:max_chunk]}",
             parse_mode="Markdown"
         )
         
@@ -237,12 +232,12 @@ async def _send_transcription_result(processing_msg, text, update):
             chunk = remaining[:max_chunk]
             remaining = remaining[max_chunk:]
             
-            if remaining:  # More parts to come
+            if remaining:
                 await update.message.reply_text(
                     f"**Qism {part}/{total_parts}**\n\n{chunk}",
                     parse_mode="Markdown"
                 )
-            else:  # Last part
+            else:
                 await update.message.reply_text(
                     f"**Qism {part}/{total_parts}**\n\n{chunk}{footer}",
                     parse_mode="Markdown"
