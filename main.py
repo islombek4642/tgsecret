@@ -18,6 +18,7 @@ sys.path.insert(0, PROJECT_DIR)
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters
+from telegram.request import HTTPXRequest
 
 from config import config
 from bot.handlers import (
@@ -191,8 +192,28 @@ async def main():
     print(f"Owner ID: {config.OWNER_ID}")
     print("=" * 50)
     
-    # Create bot application
-    application = Application.builder().token(config.BOT_TOKEN).post_init(post_init).build()
+    # Create bot application with custom timeout settings
+    request = HTTPXRequest(
+        connection_pool_size=8,
+        read_timeout=30.0,
+        write_timeout=30.0,
+        connect_timeout=30.0,
+        pool_timeout=30.0,
+    )
+    application = (
+        Application.builder()
+        .token(config.BOT_TOKEN)
+        .request(request)
+        .get_updates_request(HTTPXRequest(
+            connection_pool_size=8,
+            read_timeout=60.0,  # Long polling uchun uzunroq timeout
+            write_timeout=30.0,
+            connect_timeout=30.0,
+            pool_timeout=30.0,
+        ))
+        .post_init(post_init)
+        .build()
+    )
     
     # Add handlers
     application.add_handler(CommandHandler("start", start_command))
@@ -293,7 +314,12 @@ async def main():
     
     await application.updater.start_polling(
         allowed_updates=Update.ALL_TYPES,
-        drop_pending_updates=True
+        drop_pending_updates=True,
+        poll_interval=1.0,  # So'rovlar orasidagi vaqt
+        read_timeout=30,    # O'qish timeout
+        write_timeout=30,   # Yozish timeout
+        connect_timeout=30, # Ulanish timeout
+        pool_timeout=30,    # Pool timeout
     )
     
     # Keep running
