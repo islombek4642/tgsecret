@@ -17,6 +17,10 @@ GROQ_API_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
 WHISPER_MODEL = "whisper-large-v3-turbo"
 TEMP_DIR = "temp_bot_audio"
 
+# MIME type constants
+VIDEO_MP4 = 'video/mp4'
+AUDIO_MPEG = 'audio/mpeg'
+
 
 # ---------------------- GROQ TRANSCRIPTION ----------------------
 
@@ -69,12 +73,12 @@ def _detect_mime(file_path: str) -> str:
         '.opus': 'audio/opus',
         '.flac': 'audio/flac',
         '.webm': 'audio/webm',
-        '.mkv': 'video/mp4',
-        '.mov': 'video/mp4',
-        '.avi': 'video/mp4',
-        '.wmv': 'video/mp4',
+        '.mkv': VIDEO_MP4,
+        '.mov': VIDEO_MP4,
+        '.avi': VIDEO_MP4,
+        '.wmv': VIDEO_MP4,
     }
-    return mime_map.get(ext, 'audio/mpeg')
+    return mime_map.get(ext, AUDIO_MPEG)
 
 
 # ---------------------- COMMAND HANDLER ----------------------
@@ -145,12 +149,31 @@ async def _check_user_permissions(message, context) -> bool:
     return True
 
 
+def _get_file_size(message) -> int:
+    """Get file size from message media."""
+    if message.voice:
+        return message.voice.file_size or 0
+    if message.audio:
+        return message.audio.file_size or 0
+    if message.video:
+        return message.video.file_size or 0
+    if message.document:
+        return message.document.file_size or 0
+    return 0
+
+
 async def _get_media_file(message):
-    if message.voice: return await message.voice.get_file()
-    if message.audio: return await message.audio.get_file()
-    if message.video: return await message.video.get_file()
-    if message.video_note: return await message.video_note.get_file()
-    if message.document: return await message.document.get_file()
+    """Get file object from message media."""
+    if message.voice:
+        return await message.voice.get_file()
+    if message.audio:
+        return await message.audio.get_file()
+    if message.video:
+        return await message.video.get_file()
+    if message.video_note:
+        return await message.video_note.get_file()
+    if message.document:
+        return await message.document.get_file()
     return None
 
 
@@ -220,13 +243,7 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
         return
 
     # FILE SIZE CHECK
-    file_size = (
-        message.voice.file_size if message.voice else
-        message.audio.file_size if message.audio else
-        message.video.file_size if message.video else
-        message.document.file_size if message.document else
-        0
-    )
+    file_size = _get_file_size(message)
 
     if file_size > 25 * 1024 * 1024:
         await message.reply_text(
@@ -263,12 +280,12 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
     except Exception as e:
         try:
             await processing_msg.edit_text(f"❌ Xatolik: {str(e)[:200]}")
-        except:
+        except Exception:
             await message.reply_text(f"❌ Xatolik: {str(e)[:200]}")
 
     finally:
         if file_path and os.path.exists(file_path):
             try:
                 os.remove(file_path)
-            except:
+            except OSError:
                 pass
