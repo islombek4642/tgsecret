@@ -625,8 +625,12 @@ async def handle_add_channel_message(update: Update, context: ContextTypes.DEFAU
     
     text = update.message.text.strip()
     
-    # Ignore commands
-    if text.startswith('/'):
+    # Ignore commands (both bot and userbot)
+    if text.startswith('/') or text.startswith('.'):
+        return
+    
+    # Only accept valid channel formats (@username or t.me/username or -100xxx)
+    if not (text.startswith('@') or 't.me/' in text or text.startswith('-100') or text.lstrip('-').isdigit()):
         return
     
     # Parse and normalize channel ID
