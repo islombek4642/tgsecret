@@ -196,32 +196,57 @@ async def _send_transcription_result(processing_msg, text, update):
     
     # Telegram message limit is 4096 characters
     header = "🎙️ **Transkript Natijasi**\n━━━━━━━━━━━━━━━━\n\n"
-    footer = "\n\n━━━━━━━━━━━━━━━━\n*{}*".format(WHISPER_MODEL)
+    footer = f"\n\n━━━━━━━━━━━━━━━━\n*{WHISPER_MODEL}*"
     
-    max_length = 4000  # Leave room for header/footer
+    # Calculate safe max length (4096 - header - footer - buffer)
+    max_single = 4096 - len(header) - len(footer) - 50
+    max_chunk = 3800  # Safe chunk size for split messages
     
-    if len(text) <= max_length:
-        # Single message
-        await processing_msg.edit_text(header + text + footer)
+    if len(text) <= max_single:
+        # Single message - can edit
+        try:
+            await processing_msg.edit_text(header + text + footer, parse_mode="Markdown")
+        except Exception:
+            # Fallback: delete and send new
+            try:
+                await processing_msg.delete()
+            except Exception:
+                pass
+            await update.message.reply_text(header + text + footer, parse_mode="Markdown")
     else:
-        # Split into multiple messages
-        await processing_msg.edit_text(
-            f"🎙️ **Transkript Natijasi** (Qism 1)\n"
+        # Long text - delete processing message and send parts
+        try:
+            await processing_msg.delete()
+        except Exception:
+            pass
+        
+        # Send first part
+        first_chunk = text[:max_chunk]
+        total_parts = (len(text) // max_chunk) + 1
+        await update.message.reply_text(
+            f"🎙️ **Transkript Natijasi** (1/{total_parts})\n"
             f"━━━━━━━━━━━━━━━━\n\n"
-            f"{text[:max_length]}"
+            f"{first_chunk}",
+            parse_mode="Markdown"
         )
         
         # Send remaining parts
-        remaining = text[max_length:]
+        remaining = text[max_chunk:]
         part = 2
         while remaining:
-            chunk = remaining[:4000]
-            remaining = remaining[4000:]
+            chunk = remaining[:max_chunk]
+            remaining = remaining[max_chunk:]
             
             if remaining:  # More parts to come
-                await update.message.reply_text(f"**Qism {part}**\n\n{chunk}")
+                await update.message.reply_text(
+                    f"**Qism {part}/{total_parts}**\n\n{chunk}",
+                    parse_mode="Markdown"
+                )
             else:  # Last part
-                await update.message.reply_text(f"**Qism {part}**\n\n{chunk}{footer}")
+                await update.message.reply_text(
+                    f"**Qism {part}/{total_parts}**\n\n{chunk}{footer}",
+                    parse_mode="Markdown"
+                )
             part += 1
 
 
