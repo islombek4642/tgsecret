@@ -80,7 +80,7 @@ async def transcribe_audio_file(file_path: str) -> str:
                 "Authorization": f"Bearer {config.GROQ_API_KEY}"
             }
             
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(
                     GROQ_API_URL,
                     files=files,
@@ -236,10 +236,61 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
     if not await _check_user_permissions(message, context):
         return
     
-    # Send processing message
+    # Check file size first
+    file_size = 0
+    if message.voice:
+        file_size = message.voice.file_size or 0
+    elif message.audio:
+        file_size = message.audio.file_size or 0
+        duration = message.audio.duration or 0
+        if duration > 600:  # 10 minutes
+            await message.reply_text(
+                "❌ **Audio juda uzun!**\n\n"
+                f"**Davomiyligi:** {duration//60} daqiqa {duration%60} sekund\n"
+                "**Maksimal:** 10 daqiqa\n\n"
+                "Qisqaroq audio yuboring.",
+                parse_mode="Markdown"
+            )
+            return
+    elif message.video:
+        file_size = message.video.file_size or 0
+        duration = message.video.duration or 0
+        if duration > 600:  # 10 minutes
+            await message.reply_text(
+                "❌ **Video juda uzun!**\n\n"
+                f"**Davomiyligi:** {duration//60} daqiqa {duration%60} sekund\n"
+                "**Maksimal:** 10 daqiqa\n\n"
+                "Qisqaroq video yuboring.",
+                parse_mode="Markdown"
+            )
+            return
+    elif message.document:
+        file_size = message.document.file_size or 0
+    
+    # Check file size (25MB limit for Groq)
+    if file_size > 25 * 1024 * 1024:  # 25MB
+        await message.reply_text(
+            "❌ **Fayl juda katta!**\n\n"
+            f"**Hajmi:** {file_size/(1024*1024):.1f} MB\n"
+            "**Maksimal:** 25 MB\n\n"
+            "Kichikroq fayl yuboring.",
+            parse_mode="Markdown"
+        )
+        return
+    
+    # Send processing message with estimated time
+    estimated_time = "bir necha sekund"
+    if file_size > 5 * 1024 * 1024:  # 5MB+
+        estimated_time = "1-2 daqiqa"
+    elif file_size > 1024 * 1024:  # 1MB+
+        estimated_time = "30-60 sekund"
+    
     processing_msg = await message.reply_text(
-        "🎙️ Audio matnlashtirilmoqda...\n"
-        "⏳ Kuting..."
+        f"🎙️ **Audio matnlashtirilmoqda...**\n\n"
+        f"📊 **Fayl hajmi:** {file_size/(1024*1024):.1f} MB\n"
+        f"⏱️ **Taxminiy vaqt:** {estimated_time}\n\n"
+        f"⏳ Iltimos, kuting...",
+        parse_mode="Markdown"
     )
     
     try:
@@ -256,8 +307,15 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
         file_path = os.path.join(TEMP_DIR, f"audio_{update.message.message_id}.ogg")
         await file.download_to_drive(file_path)
         
-        # Update status
-        await processing_msg.edit_text("🔄 Whisper AI bilan ishlanmoqda...")
+        # Update status with file info
+        file_info = f"📁 {os.path.basename(file_path)} ({file_size/(1024*1024):.1f} MB)"
+        await processing_msg.edit_text(
+            f"🔄 **Whisper AI bilan ishlanmoqda...**\n\n"
+            f"{file_info}\n"
+            f"🤖 **Model:** {WHISPER_MODEL}\n\n"
+            f"⏳ Kuting, bu biroz vaqt olishi mumkin...",
+            parse_mode="Markdown"
+        )
         
         # Transcribe
         text = await transcribe_audio_file(file_path)
