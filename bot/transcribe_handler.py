@@ -355,7 +355,15 @@ async def handle_audio_message(update: Update, context: ContextTypes.DEFAULT_TYP
         await _send_transcription_result(processing_msg, text, update)
     
     except Exception as e:
-        await processing_msg.edit_text(f"❌ Xatolik: {str(e)}")
+        error_msg = f"❌ Xatolik: {str(e)[:200]}"  # Truncate long errors
+        try:
+            await processing_msg.edit_text(error_msg)
+        except Exception:
+            try:
+                await processing_msg.delete()
+            except Exception:
+                pass
+            await update.message.reply_text(error_msg)
         # Cleanup on error
         try:
             if os.path.exists(file_path):
