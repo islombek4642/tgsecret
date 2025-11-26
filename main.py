@@ -316,10 +316,6 @@ async def main():
         allowed_updates=Update.ALL_TYPES,
         drop_pending_updates=True,
         poll_interval=1.0,  # So'rovlar orasidagi vaqt
-        read_timeout=30,    # O'qish timeout
-        write_timeout=30,   # Yozish timeout
-        connect_timeout=30, # Ulanish timeout
-        pool_timeout=30,    # Pool timeout
     )
     
     # Keep running
