@@ -81,7 +81,7 @@ async def transcribe_audio(file_path: str) -> str:
                 "Authorization": f"Bearer {config.GROQ_API_KEY}"
             }
             
-            async with httpx.AsyncClient(timeout=120.0) as client:
+            async with httpx.AsyncClient(timeout=300.0) as client:
                 response = await client.post(
                     GROQ_API_URL,
                     files=files,
@@ -102,6 +102,39 @@ async def transcribe_audio(file_path: str) -> str:
         return f"❌ Xatolik: {str(e)}"
 
 
+async def _send_result(event, text: str):
+    """Send transcription result, splitting if too long."""
+    max_chunk = 3500
+    footer = f"\n\n━━━━━━━━━━━━━━━━\n_{WHISPER_MODEL}_"
+    
+    if len(text) <= max_chunk:
+        await event.respond(
+            f"🎙️ **Transkript**\n"
+            f"━━━━━━━━━━━━━━━━\n\n"
+            f"{text}{footer}"
+        )
+        return
+    
+    # Split long text
+    parts = [text[i:i + max_chunk] for i in range(0, len(text), max_chunk)]
+    total = len(parts)
+    
+    # First part
+    await event.respond(
+        f"🎙️ **Transkript** (1/{total})\n"
+        f"━━━━━━━━━━━━━━━━\n\n"
+        f"{parts[0]}"
+    )
+    
+    # Remaining parts
+    for idx in range(1, total):
+        last = (idx == total - 1)
+        await event.respond(
+            f"**Qism {idx+1}/{total}**\n\n"
+            f"{parts[idx]}{footer if last else ''}"
+        )
+
+
 async def handle_transcribe(event):
     """Universal transcription handler - works with any media."""
     reply_msg = await event.get_reply_message()
@@ -117,13 +150,28 @@ async def handle_transcribe(event):
         await event.respond("❌ Xabarda media topilmadi!")
         return
     
-    processing_msg = await event.respond("🎙️ Yuklanmoqda va matnlashtirilmoqda...")
+    # Check file size (25MB limit for Groq)
+    file_size = 0
+    if hasattr(reply_msg, 'file') and reply_msg.file:
+        file_size = reply_msg.file.size or 0
+    
+    if file_size > 25 * 1024 * 1024:
+        await event.respond(
+            f"❌ **Fayl juda katta!**\n\n"
+            f"**Hajmi:** {file_size/(1024*1024):.1f} MB\n"
+            f"**Maksimal:** 25 MB"
+        )
+        return
+    
+    processing_msg = await event.respond(
+        f"🎙️ Yuklanmoqda... ({file_size/(1024*1024):.1f} MB)"
+    )
     
     file_path = None
     try:
         os.makedirs(TEMP_DIR, exist_ok=True)
         
-        # Download media - let Telethon choose the correct extension
+        # Download media
         file_path = await reply_msg.download_media(file=TEMP_DIR)
         
         if not file_path:
@@ -146,17 +194,16 @@ async def handle_transcribe(event):
         except OSError:
             pass  # Ignore file delete errors
         
-        # Result
+        # Result - delete processing msg and send new
+        try:
+            await processing_msg.delete()
+        except Exception:
+            pass
+        
         if text.startswith("❌"):
-            await processing_msg.edit(text)
+            await event.respond(text)
         else:
-            await processing_msg.edit(
-                f"🎙️ **Transkript**\n"
-                f"━━━━━━━━━━━━━━━━\n\n"
-                f"{text}\n\n"
-                f"━━━━━━━━━━━━━━━━\n"
-                f"*{WHISPER_MODEL}*"
-            )
+            await _send_result(event, text)
     
     except Exception as e:
         await processing_msg.edit(f"❌ Xatolik: {str(e)}")
